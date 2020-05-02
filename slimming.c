@@ -10,13 +10,27 @@ float getBluePixelEnergy(const PNMImage* image, size_t x, size_t y);
 
 // calcule de la carte d'énergie
 float** createEnergyMap(const PNMImage* image);
+void freeEnergyMap(float** energyMap, const PNMImage* image);
+
+
+// structure retenan le chemin du sillon le plus cour
+typedef struct sillon_energie_path
+{
+   float energy;
+   size_t* path; 
+} Sillon_energie_path;
 
 PNMImage* reduceImageWidth(const PNMImage* image, size_t k)
 {
-
+    // calcule la map d'énergie
     float** energyMap = createEnergyMap(image);
 
     // réduit la taille de l'image
+
+
+    // libére la map d'énergie
+    freeEnergyMap(energyMap, image);
+
     return (PNMImage*)image;
 }
 
@@ -199,4 +213,15 @@ float** createEnergyMap(const PNMImage* image)
         }
     }
     return energyMap;
+}
+
+void freeEnergyMap(float** energyMap, const PNMImage* image)
+{
+    // libère la mémoire de la map
+    for (size_t i=0; i < (*image).width; i++)
+    {
+        // libére la mémoire pour la rangée
+        free(energyMap[i]);
+    }   
+    free(energyMap);
 }
