@@ -9,22 +9,12 @@ float getGreenPixelEnergy(const PNMImage* image, size_t x, size_t y);
 float getBluePixelEnergy(const PNMImage* image, size_t x, size_t y);
 
 // calcule de la carte d'énergie
-void createEnergyMap(const PNMImage* image, float ** energyMap);
+float** createEnergyMap(const PNMImage* image);
 
 PNMImage* reduceImageWidth(const PNMImage* image, size_t k)
 {
-    // alloue la mémoire
-    float** energyMap = (float**)malloc(sizeof(float*) * (*image).width);
-    for (size_t i=0; i < (*image).width; i++)
-    {
-        // alloue de la mémoire pour la rangée
-        energyMap[i] = (float*)malloc(sizeof(float) * (*image).height);
-    }
 
-    printf("ok\n");
-    createEnergyMap(image, energyMap);
-    printf("%s\n", energyMap[0][0]);
-    printf("ok\n");
+    float** energyMap = createEnergyMap(image);
 
     // réduit la taille de l'image
     return (PNMImage*)image;
@@ -138,6 +128,7 @@ float getGreenPixelEnergy(const PNMImage* image, size_t x, size_t y)
 
 float getBluePixelEnergy(const PNMImage* image, size_t x, size_t y)
 {
+
     float energy = 0;
     // calcule le niveau d'énergie d'un pixel
 
@@ -187,8 +178,16 @@ float getBluePixelEnergy(const PNMImage* image, size_t x, size_t y)
 }
 
 // calcule de la carte d'énergie
-void createEnergyMap(const PNMImage* image, float ** energyMap)
+float** createEnergyMap(const PNMImage* image)
 {
+    // alloue la mémoire
+    float** energyMap = (float**)malloc(sizeof(float*) * (*image).width);
+    for (size_t i=0; i < (*image).width; i++)
+    {
+        // alloue de la mémoire pour la rangée
+        energyMap[i] = (float*)malloc(sizeof(float) * (*image).height);
+    }
+
 
     for (size_t i=0; i < (*image).width; i++)
     {
@@ -199,5 +198,5 @@ void createEnergyMap(const PNMImage* image, float ** energyMap)
             
         }
     }
-    printf("%f\n", energyMap[0][0]);
+    return energyMap;
 }
