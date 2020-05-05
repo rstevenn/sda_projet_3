@@ -2,6 +2,14 @@
 #include <stdlib.h>
 #include "slimming.h"
 
+// structure retenant le chemin du sillon le plus cour
+typedef struct sillon_energie_path
+{
+   float energy;
+   size_t* path; 
+} Sillon_energie_path;
+
+
 // calcule du niveau d'énergie d'un pixel
 float getPixelEnergy(const PNMImage* image, size_t x, size_t y);
 float getRedPixelEnergy(const PNMImage* image, size_t x, size_t y);
@@ -12,18 +20,18 @@ float getBluePixelEnergy(const PNMImage* image, size_t x, size_t y);
 float** createEnergyMap(const PNMImage* image);
 void freeEnergyMap(float** energyMap, const PNMImage* image);
 
+// calcule de la carte des chemin d'énergie minimal
+float** less_energy_path_map(const float** energyMap, size_t width, size_t height);
 
-// structure retenan le chemin du sillon le plus cour
-typedef struct sillon_energie_path
-{
-   float energy;
-   size_t* path; 
-} Sillon_energie_path;
 
 PNMImage* reduceImageWidth(const PNMImage* image, size_t k)
 {
     // calcule la map d'énergie
     float** energyMap = createEnergyMap(image);
+
+
+    // test en calculant le sillon
+    float** less_energy_paths = less_energy_path_map((const float**) energyMap, (*image).width, (*image).height);
 
     // réduit la taille de l'image
 
@@ -31,12 +39,14 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k)
     // libére la map d'énergie
     freeEnergyMap(energyMap, image);
 
+    printf("ok\n");
+
     return (PNMImage*)image;
 }
 
 float getPixelEnergy(const PNMImage* image, size_t x, size_t y)
 {
-    // calcule le niveau d'énerfie d'un pixel
+    // calcule le niveau d'énergie d'un pixel
     return getRedPixelEnergy(image, x, y) + getGreenPixelEnergy(image, x, y) + getBluePixelEnergy(image, x, y);
 }
 
@@ -224,4 +234,74 @@ void freeEnergyMap(float** energyMap, const PNMImage* image)
         free(energyMap[i]);
     }   
     free(energyMap);
+}
+
+float** less_energy_path_map(const float** energyMap, size_t width, size_t height)
+{
+    // alloue la mémoire
+    float** energyPaths = (float**)malloc(sizeof(float*) * width);
+    for (size_t i=0; i < width; i++)
+    {
+        // alloue de la mémoire pour la rangée
+        energyPaths[i] = (float*)malloc(sizeof(float) * height);
+    }
+    
+    for (size_t y = 0; y < height; y++)
+    {
+        for (size_t x = 0; x < width; x++)
+        {
+            if (y == 0)
+            {
+                // crée la premiére ligne
+                energyPaths[x][y] = energyMap[x][y];
+            }
+            else
+            {
+                // crée les autres lignes
+                if(x == 0)
+                {
+                    if (energyPaths[x][y-1] < energyPaths[x+1][y-1])
+                    {
+                        energyPaths[x][y] = energyMap[x][y] + energyPaths[x][y-1];
+                    } 
+                    else
+                    {
+                        energyPaths[x][y] = energyMap[x][y] + energyPaths[x+1][y-1];
+                    }
+
+                }
+                else if (x == width - 1)
+                {
+                    if (energyPaths[x][y-1] < energyPaths[x-1][y-1])
+                    {
+                        energyPaths[x][y] = energyMap[x][y] + energyPaths[x][y-1];
+                    } 
+                    else
+                    {
+                        energyPaths[x][y] = energyMap[x][y] + energyPaths[x-1][y-1];
+                    }
+                }
+                else
+                {
+                    if ( energyPaths[x-1][y-1] < energyPaths[x][y-1] && energyPaths[x-1][y-1] < energyPaths[x+1][y-1] )
+                    {
+                        energyPaths[x][y] = energyMap[x][y] + energyPaths[x-1][y-1];
+                    }
+                    else if ( energyPaths[x][y-1] < energyPaths[x-1][y-1] && energyPaths[x][y-1] < energyPaths[x+1][y-1] )
+                    {
+                        energyPaths[x][y] = energyMap[x][y] + energyPaths[x][y-1];
+                    }
+                    else
+                    {
+                        energyPaths[x][y] = energyMap[x][y] + energyPaths[x+1][y-1];
+                    }
+
+                }
+            }
+        }
+    } 
+
+    
+
+    return energyPaths;
 }
