@@ -21,23 +21,35 @@ float** createEnergyMap(const PNMImage* image);
 void freeEnergyMap(float** energyMap, const PNMImage* image);
 
 // calcule de la carte des chemin d'énergie minimal
-float** less_energy_path_map(const float** energyMap, size_t width, size_t height);
+float** get_less_energy_path_map(const float** energyMap, size_t width, size_t height);
 
+// calcule le sillon d energie minimal
+Sillon_energie_path* less_energy_sillon(const float** less_energy_path_map, size_t width, size_t height, size_t i, size_t j);
 
 PNMImage* reduceImageWidth(const PNMImage* image, size_t k)
 {
     // calcule la map d'énergie
     float** energyMap = createEnergyMap(image);
+    printf("energyMap ok \n");
 
+    // test
+    float** less_energy_path_map = get_less_energy_path_map(energyMap, (*image).width, (*image).height);
+    printf("less_energy_path_map ok \n");
 
-    // test en calculant le sillon
-    float** less_energy_paths = less_energy_path_map((const float**) energyMap, (*image).width, (*image).height);
+    Sillon_energie_path* sillon = less_energy_sillon(less_energy_path_map, (*image).width, (*image).height, 100 ,(*image).height - 1);
+    printf("sillon energy: %f ok\n", (*sillon).energy);
+
+    for (size_t j = 0; j < (*image).height; j++)
+    {
+        (*image).data[ j * (*image).width + (*sillon).path[j]].red = 0;
+        (*image).data[ j * (*image).width + (*sillon).path[j]].green = 0;
+        (*image).data[ j * (*image).width + (*sillon).path[j]].blue = 0;
+    }
 
     // réduit la taille de l'image
 
 
     // libére la map d'énergie
-    freeEnergyMap(energyMap, image);
 
     printf("ok\n");
 
@@ -66,7 +78,7 @@ float getRedPixelEnergy(const PNMImage* image, size_t x, size_t y)
         tmp_energy = (*image).data[(x - 1) * (*image).width + y].red;
     }
 
-    if (x == (*image).width)
+    if (x == (*image).width - 1)
     {
         tmp_energy = abs((*image).data[x * (*image).width + y].red - tmp_energy);
     }
@@ -87,7 +99,7 @@ float getRedPixelEnergy(const PNMImage* image, size_t x, size_t y)
         tmp_energy = (*image).data[x * (*image).width + (y - 1)].red;
     }
 
-    if (y == (*image).height)
+    if (y == (*image).height - 1)
     {
         tmp_energy = abs((*image).data[x * (*image).width + y].red - tmp_energy);
     }
@@ -116,7 +128,7 @@ float getGreenPixelEnergy(const PNMImage* image, size_t x, size_t y)
         tmp_energy = (*image).data[(x - 1) * (*image).width + y].green;
     }
 
-    if (x == (*image).width)
+    if (x == (*image).width - 1)
     {
         tmp_energy = abs((*image).data[x * (*image).width + y].green - tmp_energy);
     }
@@ -137,7 +149,7 @@ float getGreenPixelEnergy(const PNMImage* image, size_t x, size_t y)
         tmp_energy = (*image).data[x * (*image).width + (y - 1)].green;
     }
 
-    if (y == (*image).height)
+    if (y == (*image).height - 1)
     {
         tmp_energy = abs((*image).data[x * (*image).width + y].green - tmp_energy);
     }
@@ -167,7 +179,7 @@ float getBluePixelEnergy(const PNMImage* image, size_t x, size_t y)
         tmp_energy = (*image).data[(x - 1) * (*image).width + y].blue;
     }
 
-    if (x == (*image).width)
+    if (x == (*image).width - 1)
     {
         tmp_energy = abs((*image).data[x * (*image).width + y].blue - tmp_energy);
     }
@@ -188,7 +200,7 @@ float getBluePixelEnergy(const PNMImage* image, size_t x, size_t y)
         tmp_energy = (*image).data[x * (*image).width + (y - 1)].blue;
     }
 
-    if (y == (*image).height)
+    if (y == (*image).height -1 )
     {
         tmp_energy = abs((*image).data[x * (*image).width + y].blue - tmp_energy);
     }
@@ -236,7 +248,7 @@ void freeEnergyMap(float** energyMap, const PNMImage* image)
     free(energyMap);
 }
 
-float** less_energy_path_map(const float** energyMap, size_t width, size_t height)
+float** get_less_energy_path_map(const float** energyMap, size_t width, size_t height)
 {
     // alloue la mémoire
     float** energyPaths = (float**)malloc(sizeof(float*) * width);
@@ -301,7 +313,67 @@ float** less_energy_path_map(const float** energyMap, size_t width, size_t heigh
         }
     } 
 
-    
-
     return energyPaths;
 }
+
+Sillon_energie_path* less_energy_sillon(const float** less_energy_path_map, size_t width, size_t height, size_t i, size_t j)
+{
+    // cas de base
+    if ( j == 0)
+    {
+        // créer le sillon
+        Sillon_energie_path* sillon = (Sillon_energie_path*) malloc (sizeof(Sillon_energie_path));
+        (*sillon).path = (size_t*) malloc (sizeof(size_t) * height);
+        (*sillon).path[0] = i;
+        (*sillon).energy = less_energy_path_map[i][j];
+        return sillon;
+    }
+
+    // trouve les positions suivante du sillon
+    Sillon_energie_path* sillon;
+    if ( i == 0 )
+    {
+        if ( less_energy_path_map[i][j-1] <= less_energy_path_map[i+1][j-1] )
+        {
+            sillon = less_energy_sillon(less_energy_path_map, width, height, i, j-1);
+        }
+        else
+        {
+            sillon = less_energy_sillon(less_energy_path_map, width, height, i+1, j-1);
+        }
+    }
+    else if ( i == width - 1)
+    {
+        if ( less_energy_path_map[i-1][j-1] <= less_energy_path_map[i][j-1] )
+        {
+            sillon = less_energy_sillon(less_energy_path_map, width, height, i, j-1);
+        }
+        else
+        {
+            sillon = less_energy_sillon(less_energy_path_map, width, height, i-1, j-1);
+        }
+    }
+    else
+    {
+        if ( less_energy_path_map[i-1][j-1] <= less_energy_path_map[i][j-1] && less_energy_path_map[i-1][j-1] <= less_energy_path_map[i+1][j-1] )
+        {
+            sillon = less_energy_sillon(less_energy_path_map, width, height, i-1, j-1);
+        }
+        else if ( less_energy_path_map[i][j-1] <= less_energy_path_map[i-1][j-1] && less_energy_path_map[i][j-1] <= less_energy_path_map[i+1][j-1] )
+        {
+            sillon = less_energy_sillon(less_energy_path_map, width, height, i, j-1);
+        }
+        else
+        {
+             sillon = less_energy_sillon(less_energy_path_map, width, height, i+1, j-1);
+        }
+    }
+
+    // ajoute les élément avant de return
+    (*sillon).energy = less_energy_path_map[i][j];
+    (*sillon).path[j] = i;
+
+    return sillon;
+
+}
+
