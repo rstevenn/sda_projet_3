@@ -49,6 +49,7 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k)
 
 
     Sillon_energie_path* sillon;
+    Sillon_energie_path* tmp_sillon;
     float** less_energy_path_map = (float**) malloc(sizeof(float*) * (*image).width);
     // alloue la mémoire
     for (size_t i=0; i < (*image).width; i++)
@@ -77,12 +78,14 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k)
             }
             else
             {
-                if ( (*less_energy_sillon((const float**)less_energy_path_map, current_width, (*new_image).height, i,(*new_image).height - 1)).energy < min_energie)
+                tmp_sillon = less_energy_sillon((const float**)less_energy_path_map, current_width, (*new_image).height, i,(*new_image).height - 1);
+                if ( (*tmp_sillon).energy < min_energie)
                 {
                     free_sillon(sillon);
                     sillon = less_energy_sillon((const float**)less_energy_path_map, current_width, (*new_image).height, i, (*new_image).height - 1);
                     min_energie = (*sillon).energy;
                 }
+                free_sillon(tmp_sillon);
             }
         }
 
