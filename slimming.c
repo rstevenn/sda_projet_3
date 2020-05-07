@@ -79,6 +79,7 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k)
             {
                 if ( (*less_energy_sillon((const float**)less_energy_path_map, current_width, (*new_image).height, i,(*new_image).height - 1)).energy < min_energie)
                 {
+                    free_sillon(sillon);
                     sillon = less_energy_sillon((const float**)less_energy_path_map, current_width, (*new_image).height, i, (*new_image).height - 1);
                     min_energie = (*sillon).energy;
                 }
