@@ -54,7 +54,7 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k)
     size_t current_width = (*image).width;
 
     // réduit la taille de l'image
-    while(current_width != k)
+    while(current_width + k != (*image).width)
     {
         // update la map des chemin
         less_energy_path_map = get_less_energy_path_map((const float**)energyMap, (*new_image).width, (*new_image).height);
