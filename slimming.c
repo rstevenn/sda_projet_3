@@ -112,7 +112,6 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k)
                 }
             }
         }
-        free_sillon(sillon);
         freePNM(new_image);
         new_image = next_image;
 
@@ -126,6 +125,7 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k)
 
 
         // nouvelle boucle
+        free_sillon(sillon);
         current_width--;
     }
 
