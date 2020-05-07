@@ -21,7 +21,7 @@ float** createEnergyMap(const PNMImage* image);
 void freeEnergyMap(float** energyMap, const PNMImage* image);
 
 // calcule de la carte des chemin d'énergie minimal
-float** get_less_energy_path_map(const float** energyMap, size_t width, size_t height);
+void get_less_energy_path_map(const float** energyMap, float** energyPaths, size_t width, size_t height);
 void free_sillon(Sillon_energie_path* sillon);
 
 // calcule le sillon d energie minimal
@@ -49,7 +49,13 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k)
 
 
     Sillon_energie_path* sillon;
-    float** less_energy_path_map;
+    float** less_energy_path_map = (float**) malloc(sizeof(float*) * (*image).width);
+    // alloue la mémoire
+    for (size_t i=0; i < (*image).width; i++)
+    {
+        // alloue de la mémoire pour la rangée
+        less_energy_path_map[i] = (float*)malloc(sizeof(float) * (*image).height);
+    }
 
     size_t current_width = (*image).width;
 
@@ -57,7 +63,7 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k)
     while(current_width + k != (*image).width)
     {
         // update la map des chemin
-        less_energy_path_map = get_less_energy_path_map((const float**)energyMap, (*new_image).width, (*new_image).height);
+        get_less_energy_path_map((const float**)energyMap, less_energy_path_map, (*new_image).width, (*new_image).height);
 
         // trouver le sillon d'énergie minimal
         float min_energie = -1;
@@ -85,7 +91,7 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k)
         for (size_t j = 0; j < (*new_image).height; j++)
         {
             int offset = 0;
-            for (size_t i =0; i < current_width; i++)
+            for (size_t i = 0; i < current_width; i++)
             {
                 if ( i == (*sillon).path[j])
                 {
@@ -110,7 +116,6 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k)
         freePNM(new_image);
         new_image = next_image;
 
-
         // recalcule les énergie 
         for (size_t j = 0; j < (*image).height; j++)
         {
@@ -125,7 +130,14 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k)
     }
 
     // libére la mémoire
-    freeEnergyMap(energyMap, new_image);
+    freeEnergyMap(energyMap, image);
+
+    for (size_t i=0; i < (*image).width; i++)
+    {
+        // alloue de la mémoire pour la rangée
+        free(less_energy_path_map[i]);
+    }
+    free(less_energy_path_map);
 
     return new_image;
 }
@@ -322,15 +334,8 @@ void freeEnergyMap(float** energyMap, const PNMImage* image)
     free(energyMap);
 }
 
-float** get_less_energy_path_map(const float** energyMap, size_t width, size_t height)
+void get_less_energy_path_map(const float** energyMap, float** energyPaths, size_t width, size_t height)
 {
-    // alloue la mémoire
-    float** energyPaths = (float**)malloc(sizeof(float*) * width);
-    for (size_t i=0; i < width; i++)
-    {
-        // alloue de la mémoire pour la rangée
-        energyPaths[i] = (float*)malloc(sizeof(float) * height);
-    }
     
     for (size_t y = 0; y < height; y++)
     {
@@ -346,7 +351,7 @@ float** get_less_energy_path_map(const float** energyMap, size_t width, size_t h
                 // crée les autres lignes
                 if(x == 0)
                 {
-                    if (energyPaths[x][y-1] < energyPaths[x+1][y-1])
+                    if (energyPaths[x][y-1] <= energyPaths[x+1][y-1])
                     {
                         energyPaths[x][y] = energyMap[x][y] + energyPaths[x][y-1];
                     } 
@@ -358,7 +363,7 @@ float** get_less_energy_path_map(const float** energyMap, size_t width, size_t h
                 }
                 else if (x == width - 1)
                 {
-                    if (energyPaths[x][y-1] < energyPaths[x-1][y-1])
+                    if (energyPaths[x][y-1] <= energyPaths[x-1][y-1])
                     {
                         energyPaths[x][y] = energyMap[x][y] + energyPaths[x][y-1];
                     } 
@@ -369,11 +374,11 @@ float** get_less_energy_path_map(const float** energyMap, size_t width, size_t h
                 }
                 else
                 {
-                    if ( energyPaths[x-1][y-1] < energyPaths[x][y-1] && energyPaths[x-1][y-1] < energyPaths[x+1][y-1] )
+                    if ( energyPaths[x-1][y-1] <= energyPaths[x][y-1] && energyPaths[x-1][y-1] <= energyPaths[x+1][y-1] )
                     {
                         energyPaths[x][y] = energyMap[x][y] + energyPaths[x-1][y-1];
                     }
-                    else if ( energyPaths[x][y-1] < energyPaths[x-1][y-1] && energyPaths[x][y-1] < energyPaths[x+1][y-1] )
+                    else if ( energyPaths[x][y-1] <= energyPaths[x-1][y-1] && energyPaths[x][y-1] <= energyPaths[x+1][y-1] )
                     {
                         energyPaths[x][y] = energyMap[x][y] + energyPaths[x][y-1];
                     }
@@ -386,8 +391,6 @@ float** get_less_energy_path_map(const float** energyMap, size_t width, size_t h
             }
         }
     } 
-
-    return energyPaths;
 }
 
 Sillon_energie_path* less_energy_sillon(const float** less_energy_path_map, size_t width, size_t height, size_t i, size_t j)
