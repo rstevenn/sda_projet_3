@@ -79,7 +79,7 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k)
             else
             {
                 tmp_sillon = less_energy_sillon((const float**)less_energy_path_map, current_width, (*new_image).height, i,(*new_image).height - 1);
-                if ( (*tmp_sillon).energy < min_energie)
+                if ( (*tmp_sillon).energy <= min_energie)
                 {
                     free_sillon(sillon);
                     sillon = less_energy_sillon((const float**)less_energy_path_map, current_width, (*new_image).height, i, (*new_image).height - 1);
@@ -122,7 +122,7 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k)
         // recalcule les énergie 
         for (size_t j = 0; j < (*image).height; j++)
         {
-            if ((*sillon).path[j] != 0 )
+            if ((*sillon).path[j] != 0)
                 energyMap[(*sillon).path[j] - 1][j] = getPixelEnergy(new_image, j, (*sillon).path[j] - 1);
             energyMap[(*sillon).path[j]][j] = getPixelEnergy(new_image, j, (*sillon).path[j]);
         }
@@ -425,7 +425,7 @@ Sillon_energie_path* less_energy_sillon(const float** less_energy_path_map, size
     }
     else if ( i == width - 1)
     {
-        if ( less_energy_path_map[i-1][j-1] <= less_energy_path_map[i][j-1] )
+        if ( less_energy_path_map[i][j-1] <= less_energy_path_map[i-1][j-1] )
         {
             sillon = less_energy_sillon(less_energy_path_map, width, height, i, j-1);
         }
